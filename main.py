@@ -2,12 +2,11 @@
 
 
 class game:
-
     def __init__(self):
-        self.board = []
-        self.quarterTile = [['.','.','.'],['.','.','.'],['.','.','.']]
-        for num in range(4):
-            self.board.append(self.quarterTile)
+        self.board = [[['.','.','.'],['.','.','.'],['.','.','.']],
+            [['.','.','.'],['.','.','.'],['.','.','.']],
+            [['.','.','.'],['.','.','.'],['.','.','.']],
+            [['.','.','.'],['.','.','.'],['.','.','.']]]
     
     def __str__(self):
         boardstring = ''
@@ -81,34 +80,33 @@ class game:
         return boardstring
 
 class player:
-
     def __init__(self, piece):
         self.piece = piece
 
 def rotate(game, quadToRotate, rotation):
-    temp = game.board[quadToRotate]
-    temp2 = []
+    original = game.board[quadToRotate]
+    rotated = [['.','.','.'],['.','.','.'],['.','.','.']]
     if rotation.lower() == 'r':
-        temp2[0][0] = temp[2][0]
-        temp2[0][1] = temp[1][0]
-        temp2[0][2] = temp[0][0]
-        temp2[1][0] = temp[2][1]
-        temp2[1][1] = temp[1][1]
-        temp2[1][2] = temp[0][1]
-        temp2[2][0] = temp[2][2]
-        temp2[2][1] = temp[1][2]
-        temp2[2][2] = temp[0][2]
+        rotated[0][0] = original[2][0]
+        rotated[0][1] = original[1][0]
+        rotated[0][2] = original[0][0]
+        rotated[1][0] = original[2][1]
+        rotated[1][1] = original[1][1]
+        rotated[1][2] = original[0][1]
+        rotated[2][0] = original[2][2]
+        rotated[2][1] = original[1][2]
+        rotated[2][2] = original[0][2]
     elif rotation.lower() == 'l':
-        temp2[0][0] = temp[0][2]
-        temp2[0][1] = temp[1][2]
-        temp2[0][2] = temp[2][2]
-        temp2[1][0] = temp[0][1]
-        temp2[1][1] = temp[1][1]
-        temp2[1][2] = temp[2][1]
-        temp2[2][0] = temp[0][0]
-        temp2[2][1] = temp[1][0]
-        temp2[2][2] = temp[2][0]
-    game.board[quadToRotate] = temp2
+        rotated[0][0] = original[0][2]
+        rotated[0][1] = original[1][2]
+        rotated[0][2] = original[2][2]
+        rotated[1][0] = original[0][1]
+        rotated[1][1] = original[1][1]
+        rotated[1][2] = original[2][1]
+        rotated[2][0] = original[0][0]
+        rotated[2][1] = original[1][0]
+        rotated[2][2] = original[2][0]
+    game.board[quadToRotate] = rotated
 
 def play(game, player, quadrant, tile, quadRotate, rotation):
     col = tile % 3
@@ -128,6 +126,7 @@ def main():
     board = game()
     print(board)
     play(board, player1, 0, 1, 0, 'r')
+    play(board, player2, 2, 5, 2, 'l')
     print(board)
 
 if __name__ == "__main__":
