@@ -1,0 +1,23 @@
+Program Instructions:
+
+Start game:
+    -Run "main.py" (preferably with python3)
+    -Select a color ('w' or 'b')
+    -First move is selected randomly
+
+Making moves:
+    -moves must be in format [quadrant]/[tile] [quadtorotate][rotation]
+        eg. "1/5 1r" or "4/9 4L"
+    -Quadrant is the 3x3 block [1-4] where you will place your piece
+        12
+        34
+    -Tile is the position [1-9] in the selected quadrant
+        123
+        456
+        789
+    -QuadrantToRotate is the quadrant that you wish to rotate after you place your piece
+    -Rotation is the direction you will rotate 'l' or 'L' is counterclockwise and 'r' or 'R' is counterclockwise
+
+AI Settings:
+    - Search depth can be adjusted by modifying the maxDepth variable on line 11 of AI.py
+	- Search Method can be adjusted by modifying the searchMethod variable on line 14 of AI.py ('AlphaBeta' or 'MiniMax')

@@ -1,232 +1,203 @@
+"""
+Author: David Foster
+Date: 11/12/2017
+"""
+
 import random
 from copy import deepcopy
-
 import pentago
 
 # Depth limit of search tree
-maxDepth = 3
+maxDepth = 2
 
 # Search method to use, 'AlphaBeta' or 'MiniMax'
-searchMethod = 'AlphaBeta'
+searchMethod = 'MiniMax'
 
-# Game node class used to create tree
+#Game node class used to create tree
 class gameNode:
     state = None
-    lastMove = None
     depth = 0
     value = 0
-    children = []
+    prevMove = []
+    childNodes = []
     
-    # Populates list of children from current game state
-    def getChildren(self, color):
-        # Get list of possible moves
-        moves = self.state.possibleMoves()
+    #get list of child nodes from the current game state
+    def getchildNodes(self, color):
+        #get list of possible moves
+        moves = self.state.getPossibleMoves()
         
-        # Create a child for each move and add it to the list
+        #create a childnode for each move and add it to the list of childnodes
         for move in moves:
             child = gameNode()
             child.state = pentago.game()
             child.state.board = deepcopy(self.state.board)
-            child.state.placeItem(color, move)
-            child.state.rotateBlock(move)
-            child.lastMove = move
+            child.state.placePiece(color, move[0], move[1])
+            child.state.rotate(move[2], move[3])
+            child.prevMove = move
             child.depth = self.depth + 1
-            child.children = []
+            child.childNodes = []
             
-            # Check if the new board state already exists
-            exists = False
-            for existing in self.children:
-                if child.state == existing.state:
-                    exists = True
+            #check for duplicate board states
+            nodeExists = False
+            for existingNode in self.childNodes:
+                if child.state == existingNode.state:
+                    nodeExists = True
                     break
                 
-            # Add the new state if it does not exist yet
-            if not exists:
-                self.children.append(child)
-
-
-# AI player class containing MiniMax and AlphaBeta search algorithms
-class player:
-    
-    gameTree = None
+            #add the new state if it does not exist
+            if not nodeExists:
+                self.childNodes.append(child)
+                
+#AI agent class containing MiniMax and AlphaBeta search algorithms
+class agent:
+    gameTreeRoot = None
     currentNode = None
     maxcolor = ''
     mincolor = ''
     depthLimit = -1
-    
-    # Testing Variables
-    nExpanded = 0
 
-    # Get a random valid move for testing
-    def getTestMove(self, current):
-        valid = False
-        while not valid:
-            move = ''
-            move += str(random.randint(1, 4))
-            move += '/'
-            move += str(random.randint(1, 9))
-            move += ' '
-            move += str(random.randint(1, 4))
-            move += ['r', 'l'][random.randint(0,1)]
-            valid = current.validMove(move)
-        return move
+    nExpanded = 0
     
-    # Get an intelligent move using game tree search
+    #get an intelligent move using game tree search
     def getMove(self, current):
-        # Create the tree or update current node if it already exists
-        if self.gameTree == None:
-            self.gameTree = gameNode()
-            self.gameTree.state = current
-            self.gameTree.depth = 0
-            self.gameTree.lastMove = ''
-            self.currentNode = self.gameTree
+        #create the treeroot node or update current node if it already exists
+        if self.gameTreeRoot == None:
+            self.gameTreeRoot = gameNode()
+            self.gameTreeRoot.state = current
+            self.gameTreeRoot.depth = 0
+            self.gameTreeRoot.prevMove = []
+            self.currentNode = self.gameTreeRoot
         else:
-            for child in self.currentNode.children:
+            for child in self.currentNode.childNodes:
                 if child.state == current:
                     self.currentNode = child
                     break
                 
-        # Update depth limit for this search
         self.depthLimit = self.currentNode.depth + maxDepth
         
-        # Find optimal state
+        #find the optimal state
         if searchMethod == 'AlphaBeta':
             nextNode = self.alphaBetaSearch(self.currentNode)
         else:
             nextNode = self.miniMaxSearch(self.currentNode)
         
-        # Display and reset nExpanded for testing
-        # print self.nExpanded
+        print(self.nExpanded)
         self.nExpanded = 0
-        
-        # Update current node to the optimal state
+
+        #update current node to the optimal state and return the move used to get there
         self.currentNode = nextNode
-        
-        # Return the move used to get to optimal state
-        return nextNode.lastMove
-        
-    def alphaBetaSearch(self, node):
-        #If there are no children yet, get them
-        if(len(node.children) == 0):
-            node.getChildren(self.maxcolor)
-            self.nExpanded += 1
-        
-        # Start a new AlphaBeta search from the current state
-        beta = float('inf')
-        alpha = -float('inf')
-        bestChild = node.children[0]
-        
-        # Find the maximum value child
-        for child in node.children:
-            # Determine value by minimizing next depth level
-            child.value = self.AB_minimize(child, alpha, beta)
-            if child.value > alpha:
-                alpha = child.value
-                bestChild = child
-        return bestChild
-
-
-    def AB_maximize(self, node, alpha, beta):
-        # If we haven't hit depth limit and children don't exist yet, get them
-        if node.depth < self.depthLimit:
-            if len(node.children) == 0:
-                node.getChildren(self.maxcolor)
-                self.nExpanded += 1
-        
-        # If node is terminal, return its utility    
-        if len(node.children) == 0:
-            return node.state.getUtility(self.maxcolor, self.mincolor)
-        
-        # Find the maximum value child
-        value = -float('inf')
-        for child in node.children:
-            # Determine value by minimizing next depth level
-            child.value = self.AB_minimize(child, alpha, beta)
-            value = max(value, child.value)
-            if value >= beta:
-                # Prune nodes and return current value
-                return value
-            alpha = max(alpha, value) 
-        return value
-        
-    def AB_minimize(self, node, alpha, beta):
-        # If we haven't hit depth limit and children don't exist yet, get them
-        if node.depth < self.depthLimit:
-            if len(node.children) == 0:
-                node.getChildren(self.mincolor)
-                self.nExpanded += 1
-
-        # If node is terminal, return its utility 
-        if len(node.children) == 0:
-            return node.state.getUtility(self.maxcolor, self.mincolor)
-        
-        # Find the minimum value child
-        value = float('inf')
-        for child in node.children:
-            # Determine value by maximizing next depth level
-            child.value = self.AB_maximize(child, alpha, beta)
-            value = min(value, child.value)
-            if value <= alpha:
-                # Prune nodes and return current value
-                return value
-            beta = min(beta, value)
-        return value
+        return nextNode.prevMove
     
-    
+    #MinMax search algorithm functions
     def miniMaxSearch(self, node):
-        # If there are no children yet, get them
-        if(len(node.children) == 0):
-            node.getChildren(self.maxcolor)
+        #get child nodes if none exist
+        if(len(node.childNodes) == 0):
+            node.getchildNodes(self.maxcolor)
             self.nExpanded += 1
         
-        # Start a new MiniMax search from the current state
+        #calculate maximum value
         bestValue = self.MM_maximize(node)
-        bestChild = node.children[0]
+        bestChild = node.childNodes[0]
         
-        # Find the child with optimal value and return it
-        for child in node.children:
+        #find the child with optimal value and return it
+        for child in node.childNodes:
             if child.value == bestValue:
                 bestChild = child
                 break
         return bestChild
     
     def MM_maximize(self, node):
-        # If we haven't hit depth limit and children don't exist yet, get them
+        #check depth to depth limit and return utility if its a terminal node
         if node.depth < self.depthLimit:
-            if len(node.children) == 0:
-                node.getChildren(self.maxcolor)
+            if len(node.childNodes) == 0:
+                node.getchildNodes(self.maxcolor)
                 self.nExpanded += 1
+        if len(node.childNodes) == 0:
+            return node.state.getUtility(node.state.getLines(), self.maxcolor, self.mincolor)
         
-        # If node is terminal, return its utility 
-        if len(node.children) == 0:
-            return node.state.getUtility(self.maxcolor, self.mincolor)
-        
-        # Find the maximum value child    
+        #otherwise find max value child    
         maxValue = -float('inf')
-        for child in node.children:
-            # Determine value by minimizing next depth level
+        for child in node.childNodes:
+            #find minimum of next depth level
             child.value = self.MM_minimize(child)
             maxValue = max(maxValue, child.value)
         return maxValue
     
     def MM_minimize(self, node):
-        # If we haven't hit depth limit and children don't exist yet, get them
+        #check depth to depth limit and return utility if its a terminal node
         if node.depth < self.depthLimit:
-            if len(node.children) == 0:
-                node.getChildren(self.mincolor)
+            if len(node.childNodes) == 0:
+                node.getchildNodes(self.mincolor)
                 self.nExpanded += 1
+        if len(node.childNodes) == 0:
+            return node.state.getUtility(node.state.getLines(), self.maxcolor, self.mincolor)
         
-        # If node is terminal, return its utility 
-        if len(node.children) == 0:
-            return node.state.getUtility(self.maxcolor, self.mincolor)
-        
-        # Find the minimum value child    
+        #otherwise find the minimum value child   
         minValue = float('inf')
-        for child in node.children:
-            # Determine value by maximizing next depth level
+        for child in node.childNodes:
+            #find maximum of next depth level
             child.value = self.MM_maximize(child)
             minValue = min(minValue, child.value)
         return minValue
         
-    
+    #AlphaBeta search algorithm functions
+    def alphaBetaSearch(self, node):
+        #get child nodes if none exist
+        if(len(node.childNodes) == 0):
+            node.getchildNodes(self.maxcolor)
+            self.nExpanded += 1
+        beta = float('inf')
+        alpha = -float('inf')
+        bestChild = node.childNodes[0]
+        
+        #get max value child
+        for child in node.childNodes:
+            #determine value by minimizing next depth level
+            child.value = self.AB_minimize(child, alpha, beta)
+            if child.value > alpha:
+                alpha = child.value
+                bestChild = child
 
+        return bestChild
+
+    def AB_maximize(self, node, alpha, beta):
+        #check depth to depth limit and return utility if its a terminal node
+        if node.depth < self.depthLimit:
+            if len(node.childNodes) == 0:
+                node.getchildNodes(self.maxcolor) 
+                self.nExpanded += 1
+        if len(node.childNodes) == 0:
+            return node.state.getUtility(node.state.getLines(), self.maxcolor, self.mincolor)
+        
+        #otherwise find max value child
+        value = -float('inf')
+        for child in node.childNodes:
+            #determine value by minimizing next depth level
+            child.value = self.AB_minimize(child, alpha, beta)
+            value = max(value, child.value)
+            #prune if value is greater or equal to beta by returning current node value
+            if value >= beta:
+                return value
+            alpha = max(alpha, value) 
+        return value
+        
+    def AB_minimize(self, node, alpha, beta):
+        #check depth to depth limit and return utility if its a terminal node
+        if node.depth < self.depthLimit:
+            if len(node.childNodes) == 0:
+                node.getchildNodes(self.mincolor)
+                self.nExpanded += 1
+        if len(node.childNodes) == 0:
+            return node.state.getUtility(node.state.getLines(), self.maxcolor, self.mincolor)
+        
+        #otherwise find min value child
+        value = float('inf')
+        for child in node.childNodes:
+            #determine value by maximizing next depth level
+            child.value = self.AB_maximize(child, alpha, beta)
+            value = min(value, child.value)
+            #prune if value is less or equal to alpha by returning current node value
+            if value <= alpha:
+                return value
+            beta = min(beta, value)
+        return value

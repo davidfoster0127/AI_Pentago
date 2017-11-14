@@ -1,4 +1,9 @@
+"""
+Author: David Foster
+Date: 11/12/2017
+"""
 
+#holds game state and methods for playing game
 class game:
     def __init__(self):
         self.board = [[['.','.','.'],['.','.','.'],['.','.','.']],
@@ -15,11 +20,12 @@ class game:
         else:
             print("Invalid play")
     
+    #places players piece at specified position
     def placePiece(self, player, quadrant, tile):
         row = tile//3
         col = tile%3
         if self.isValidMove(quadrant, tile):
-            self.board[quadrant][row][col] = player.piece
+            self.board[quadrant][row][col] = player
         else:
             print("Invalid piece placement")
 
@@ -75,14 +81,14 @@ class game:
         lines.append(self.board[1][1][2]+self.board[1][2][1]+self.board[3][0][0]+self.board[2][1][2]+self.board[2][2][1])
 
         for line in lines:
-            if player.piece*5 in line:
+            if player*5 in line:
                 win = True
         
         return win
 
     def isValidMove(self, quadrant, tile):
         valid = False
-        if self.board[quadrant][tile//3][tile%3] == '.':
+        if self.board[int(quadrant)][int(tile)//3][int(tile)%3] == '.':
             valid = True
         return valid
 
@@ -123,11 +129,11 @@ class game:
 
         return lines
 
-    def getUtility(self, lines, min, max):
+    def getUtility(self, lines, max, min):
         utility = 0
         scores = [1, 10, 100, 1000]
         for line in lines:
-            if max*6 or max*5 in line:
+            if max*6 in line or max*5 in line:
                 utility += scores[3]
                 pass
             elif max*4 in line:
@@ -139,7 +145,7 @@ class game:
             elif max*2 in line:
                 utility += scores[0]
         for line in lines:
-            if min*6 or min*5 in line:
+            if min*6 in line or min*5 in line:
                 utility -= scores[3]
                 pass
             elif min*4 in line:
