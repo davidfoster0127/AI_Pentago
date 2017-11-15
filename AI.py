@@ -81,7 +81,7 @@ class agent:
         else:
             nextNode = self.miniMaxSearch(self.currentNode)
         
-        print(self.nExpanded)
+        #print(self.nExpanded)
         self.nExpanded = 0
 
         #update current node to the optimal state and return the move used to get there
